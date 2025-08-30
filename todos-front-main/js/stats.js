@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return response.json();
       })
       .then(data => {
-        // Vérifie que la structure est correcte
+        
         if (!Array.isArray(data) || !Array.isArray(data[0].todolist)) {
           throw new Error("Format inattendu de la réponse API.");
         }
