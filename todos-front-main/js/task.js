@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return response.json();
     })
     .then(data => {
-      const taches = data[0]?.todolist || [];
+      const taches = Array.isArray(data) ? data : [];
 
       if (!taches.length) {
         const emptyMsg = document.createElement("p");

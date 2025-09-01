@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fetch("https://totolist-qen1.vercel.app/api/todos")
     .then(res => res.json())
     .then(data => {
-      const task = data[0].todolist.find(t => t.id === id);
+      const task = data.find((t) => String(t.id) === String(id)); 
 
       if (!task) {
         if (h1) h1.textContent = "Tâche introuvable";
