@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  fetch("http://localhost:3000/todos")
+  fetch("https://totolist-qen1.vercel.app/api/todos")
     .then(res => res.json())
     .then(data => {
       const task = data[0].todolist.find(t => t.id === id);
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("toggleBtn").addEventListener("click", () => {
         const updatedTask = { ...task, is_complete: !task.is_complete };
 
-        fetch(`http://localhost:3000/todos/${id}`, {
+        fetch(`https://totolist-qen1.vercel.app/api/todos/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedTask)
