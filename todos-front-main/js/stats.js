@@ -7,13 +7,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return response.json();
       })
       .then(data => {
-        
-        if (!Array.isArray(data) || !Array.isArray(data[0].todolist)) {
+        if (!Array.isArray(data)) {
           throw new Error("Format inattendu de la réponse API.");
         }
-  
-        const tasks = data[0].todolist;
-  
+        
+        const tasks = data;
+        
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter(task => task.is_complete).length;
         const pendingTasks = totalTasks - completedTasks;
