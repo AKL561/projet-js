@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("app");
   
-    fetch("http://localhost:3000/todos")
+    fetch("https://totolist-qen1.vercel.app/api/todos")
       .then(response => {
         if (!response.ok) throw new Error(`Erreur HTTP : ${response.status}`);
         return response.json();

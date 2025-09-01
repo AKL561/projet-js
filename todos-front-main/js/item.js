@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // ✅ Gestion du bouton de suppression
       document.getElementById("deleteBtn").addEventListener("click", () => {
         if (confirm("Supprimer cette tâche ?")) {
-          fetch(`http://localhost:3000/todos/${id}`, {
+          fetch(`https://totolist-qen1.vercel.app/api/todos/${id}`, {
             method: "DELETE"
           })
           .then(() => {

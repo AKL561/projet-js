@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   taskListDiv.prepend(formDiv);
 
   // ✅ Charger les tâches existantes
-  fetch("http://localhost:3000/todos")
+  fetch("https://totolist-qen1.vercel.app/api/todos")
     .then(response => {
       if (!response.ok) throw new Error("Erreur lors de la récupération");
       return response.json();
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
       Tags: []
     };
 
-    fetch("http://localhost:3000/todos", {
+    fetch("https://totolist-qen1.vercel.app/api/todos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(nouvelleTache)
@@ -141,5 +141,10 @@ document.addEventListener("DOMContentLoaded", () => {
     div.appendChild(button);
     container.appendChild(div);
   }
-});
+});function addTask(tasks, task) {
+  tasks.push(task);
+  return tasks;
+}
+
+module.exports = { addTask };
 
