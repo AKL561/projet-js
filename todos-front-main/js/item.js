@@ -1,3 +1,12 @@
+const API_BASE = "https://totolist-qen1.vercel.app/api";
+
+function asTodoArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.todolist)) return data.todolist;
+  if (Array.isArray(data) && data[0] && Array.isArray(data[0].todolist)) return data[0].todolist;
+  return [];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const id = parseInt(params.get("id"));
@@ -11,10 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  fetch("https://totolist-qen1.vercel.app/api/todos")
+  fetch(`${API_BASE}/todos`)
     .then(res => res.json())
     .then(data => {
-      const task = data.find((t) => String(t.id) === String(id)); 
+      const tasks = asTodoArray(data);
+      const task = tasks.find(t => String(t.id) === String(id));
 
       if (!task) {
         if (h1) h1.textContent = "Tâche introuvable";
@@ -38,32 +48,31 @@ document.addEventListener("DOMContentLoaded", () => {
         </button>
         <button id="deleteBtn" class="btn btn-sm btn-danger ms-2">Supprimer</button>
       `;
-      
 
       // ✅ Gestion du bouton de changement de statut
       document.getElementById("toggleBtn").addEventListener("click", () => {
         const updatedTask = { ...task, is_complete: !task.is_complete };
 
-        fetch(`https://totolist-qen1.vercel.app/api/todos/${id}`, {
+        fetch(`${API_BASE}/todos/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedTask)
         })
-        .then(() => location.reload())
-        .catch(() => alert("Erreur lors de la mise à jour."));
+          .then(() => location.reload())
+          .catch(() => alert("Erreur lors de la mise à jour."));
       });
 
       // ✅ Gestion du bouton de suppression
       document.getElementById("deleteBtn").addEventListener("click", () => {
         if (confirm("Supprimer cette tâche ?")) {
-          fetch(`https://totolist-qen1.vercel.app/api/todos/${id}`, {
+          fetch(`${API_BASE}/todos/${id}`, {
             method: "DELETE"
           })
-          .then(() => {
-            if (h1) h1.textContent = "Tâche supprimée";
-            container.innerHTML = "<p>Tâche supprimée.</p>";
-          })
-          .catch(() => alert("Erreur lors de la suppression."));
+            .then(() => {
+              if (h1) h1.textContent = "Tâche supprimée";
+              container.innerHTML = "<p>Tâche supprimée.</p>";
+            })
+            .catch(() => alert("Erreur lors de la suppression."));
         }
       });
     })
@@ -72,13 +81,4 @@ document.addEventListener("DOMContentLoaded", () => {
       if (h1) h1.textContent = "Erreur réseau";
       if (container) container.textContent = "Impossible de charger la tâche.";
     });
-
-
-
-
-        
-        
-      });
-  
-  
-  
+});

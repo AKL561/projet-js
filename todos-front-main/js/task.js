@@ -1,3 +1,13 @@
+const API_BASE = "https://totolist-qen1.vercel.app/api";
+
+
+function asTodoArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.todolist)) return data.todolist;
+  if (Array.isArray(data) && data[0] && Array.isArray(data[0].todolist)) return data[0].todolist;
+  return [];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const taskListDiv = document.getElementById("app");
 
@@ -7,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // ✅ Formulaire pour ajouter une tâche
+  // Formulaire d’ajout
   const formDiv = document.createElement("div");
   formDiv.classList.add("mb-4");
 
@@ -24,38 +34,28 @@ document.addEventListener("DOMContentLoaded", () => {
   formDiv.appendChild(addBtn);
   taskListDiv.prepend(formDiv);
 
-  // ✅ Charger les tâches existantes
-  fetch("https://totolist-qen1.vercel.app/api/todos")
-    .then(response => {
-      if (!response.ok) throw new Error("Erreur lors de la récupération");
-      return response.json();
-    })
+  // Charger les tâches existantes
+  fetch(`${API_BASE}/todos`)
+    .then(r => { if (!r.ok) throw new Error("Erreur lors de la récupération"); return r.json(); })
     .then(data => {
-      const taches = Array.isArray(data) ? data : [];
-
+      const taches = asTodoArray(data);
       if (!taches.length) {
         const emptyMsg = document.createElement("p");
         emptyMsg.textContent = "Aucune tâche disponible.";
         taskListDiv.appendChild(emptyMsg);
         return;
       }
-
-      taches.forEach(tache => {
-        afficherTache(taskListDiv, tache);
-      });
+      taches.forEach(tache => afficherTache(taskListDiv, tache));
     })
-    .catch(error => {
-      console.error("Erreur :", error);
+    .catch(err => {
+      console.error("Erreur :", err);
       taskListDiv.innerHTML = "<p>Impossible de charger les tâches.</p>";
     });
 
-  // ✅ Ajouter une tâche (en l'envoyant au backend)
+  // Ajouter une tâche
   addBtn.addEventListener("click", () => {
     const texte = input.value.trim();
-    if (!texte) {
-      alert("Veuillez entrer un nom de tâche.");
-      return;
-    }
+    if (!texte) return alert("Veuillez entrer un nom de tâche.");
 
     const nouvelleTache = {
       text: texte,
@@ -64,32 +64,25 @@ document.addEventListener("DOMContentLoaded", () => {
       Tags: []
     };
 
-    fetch("https://totolist-qen1.vercel.app/api/todos", {
+    fetch(`${API_BASE}/todos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(nouvelleTache)
     })
-      .then(res => {
-        if (!res.ok) throw new Error("Erreur lors de l'ajout");
-        return res.json();
-      })
+      .then(res => { if (!res.ok) throw new Error("Erreur lors de l'ajout"); return res.json(); })
       .then(data => {
-        console.log("Tâche ajoutée :", data);
-        afficherTache(taskListDiv, data); // Affiche la tâche avec son ID réel
+        afficherTache(taskListDiv, data);
+        input.value = "";
       })
-      .catch(error => {
-        console.error("Erreur :", error);
+      .catch(err => {
+        console.error("Erreur :", err);
         alert("Erreur lors de l'ajout de la tâche.");
       });
-
-    input.value = "";
   });
 
-  // ✅ Afficher une tâche
   function afficherTache(container, tache) {
     const div = document.createElement("div");
     div.classList.add("task");
-
     Object.assign(div.style, {
       padding: "15px",
       border: "1px solid #ddd",
@@ -98,7 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
       backgroundColor: "#f9f9f9",
       boxShadow: "0 2px 5px rgba(0,0,0,0.05)"
     });
-
     div.innerHTML = `
       <h3>${tache.text}</h3>
       <p>Créée le : ${tache.created_at}</p>
@@ -106,14 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
       <p>Tags : ${Array.isArray(tache.Tags) && tache.Tags.length ? tache.Tags.join(", ") : "Aucun"}</p>
       <hr>
     `;
-
-    // ✅ Bouton "Voir les détails"
     const button = document.createElement("button");
     button.textContent = "Voir les détails";
-    button.onclick = () => {
-      window.location.href = `item.html?id=${tache.id}`;
-    };
-
+    button.onclick = () => { window.location.href = `item.html?id=${tache.id}`; };
     Object.assign(button.style, {
       backgroundColor: "#1abc9c",
       color: "#ffffff",
@@ -125,18 +112,13 @@ document.addEventListener("DOMContentLoaded", () => {
       fontSize: "1rem",
       transition: "background-color 0.3s ease, transform 0.2s ease"
     });
-
-    button.addEventListener("mouseover", () => {
-      button.style.backgroundColor = "#2c3e50";
-      button.style.transform = "scale(1.03)";
-    });
-
-    button.addEventListener("mouseout", () => {
-      button.style.backgroundColor = "#1abc9c";
-      button.style.transform = "scale(1)";
-    });
+    button.addEventListener("mouseover", () => { button.style.backgroundColor = "#2c3e50"; button.style.transform = "scale(1.03)"; });
+    button.addEventListener("mouseout", () => { button.style.backgroundColor = "#1abc9c"; button.style.transform = "scale(1)"; });
 
     div.appendChild(button);
     container.appendChild(div);
   }
 });
+  
+  
+  
