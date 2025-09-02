@@ -1,84 +1,98 @@
 const API_BASE = "https://totolist-qen1.vercel.app/api";
 
-function asTodoArray(data) {
-  if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.todolist)) return data.todolist;
-  if (Array.isArray(data) && data[0] && Array.isArray(data[0].todolist)) return data[0].todolist;
-  return [];
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
-  const id = parseInt(params.get("id"));
+  const idParam = params.get("id");
+  const id = Number.parseInt(idParam, 10);
 
   const h1 = document.querySelector(".masthead-heading.text-uppercase.mb-0");
   const container = document.getElementById("app");
 
-  if (!id || isNaN(id)) {
-    if (h1) h1.textContent = "ID invalide";
-    if (container) container.textContent = "Tâche non trouvée.";
+  // helpers
+  const setTitle = (txt) => { if (h1) h1.textContent = txt; };
+  const setBody  = (html) => { if (container) container.innerHTML = html; };
+
+  if (!idParam || Number.isNaN(id)) {
+    setTitle("ID invalide");
+    setBody("<p>Tâche non trouvée.</p>");
     return;
   }
 
-  fetch(`${API_BASE}/todos`)
-    .then(res => res.json())
-    .then(data => {
-      const tasks = asTodoArray(data);
-      const task = tasks.find(t => String(t.id) === String(id));
+  // petit état de chargement
+  setTitle("Chargement…");
+  setBody("<p>Chargement des détails…</p>");
 
-      if (!task) {
-        if (h1) h1.textContent = "Tâche introuvable";
-        if (container) container.textContent = "Aucune tâche ne correspond à cet ID.";
+  // >>> on va directement chercher /todos/:id
+  fetch(`${API_BASE}/todos/${id}`)
+    .then(async (res) => {
+      if (res.status === 404) {
+        // pas de tâche avec cet ID
+        setTitle("TÂCHE INTROUVABLE");
+        setBody("<p>Aucune tâche ne correspond à cet ID.</p>");
+        throw new Error("Not Found");
+      }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.json();
+    })
+    .then((task) => {
+      // Sécurisation minimale si jamais l’API renvoie un objet inattendu
+      if (!task || typeof task !== "object" || task.id == null) {
+        setTitle("TÂCHE INTROUVABLE");
+        setBody("<p>Réponse inattendue de l’API.</p>");
         return;
       }
 
-      // ✅ Affichage du titre
-      if (h1) {
-        h1.textContent = task.text;
-      }
-
-      // ✅ Affichage des détails + boutons
-      container.innerHTML = `
-        <h2>${task.text}</h2>
-        <p>Créée le : ${task.created_at}</p>
+      // Affichage
+      setTitle(task.text || "Sans titre");
+      setBody(`
+        <h2>${task.text || "Sans titre"}</h2>
+        <p>Créée le : ${task.created_at ?? "—"}</p>
         <p>Statut : <strong>${task.is_complete ? "✅ Terminée" : "🕒 À faire"}</strong></p>
-        <p>Tags : ${Array.isArray(task.Tags) ? task.Tags.join(", ") : "Aucun"}</p>
+        <p>Tags : ${
+          Array.isArray(task.Tags) && task.Tags.length ? task.Tags.join(", ") : "Aucun"
+        }</p>
+
         <button id="toggleBtn" class="btn btn-sm btn-primary me-2">
           ${task.is_complete ? "Réouvrir" : "Marquer comme terminée"}
         </button>
         <button id="deleteBtn" class="btn btn-sm btn-danger ms-2">Supprimer</button>
-      `;
+      `);
 
-      // ✅ Gestion du bouton de changement de statut
-      document.getElementById("toggleBtn").addEventListener("click", () => {
-        const updatedTask = { ...task, is_complete: !task.is_complete };
-
+      // Toggle statut
+      document.getElementById("toggleBtn")?.addEventListener("click", () => {
+        const updated = { ...task, is_complete: !task.is_complete };
         fetch(`${API_BASE}/todos/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedTask)
+          body: JSON.stringify(updated),
         })
-          .then(() => location.reload())
+          .then((r) => {
+            if (!r.ok) throw new Error("PUT failed");
+            location.reload();
+          })
           .catch(() => alert("Erreur lors de la mise à jour."));
       });
 
-      // ✅ Gestion du bouton de suppression
-      document.getElementById("deleteBtn").addEventListener("click", () => {
-        if (confirm("Supprimer cette tâche ?")) {
-          fetch(`${API_BASE}/todos/${id}`, {
-            method: "DELETE"
+      // Suppression
+      document.getElementById("deleteBtn")?.addEventListener("click", () => {
+        if (!confirm("Supprimer cette tâche ?")) return;
+        fetch(`${API_BASE}/todos/${id}`, { method: "DELETE" })
+          .then((r) => {
+            if (!r.ok) throw new Error("DELETE failed");
+            setTitle("Tâche supprimée");
+            setBody("<p>Tâche supprimée.</p>");
           })
-            .then(() => {
-              if (h1) h1.textContent = "Tâche supprimée";
-              container.innerHTML = "<p>Tâche supprimée.</p>";
-            })
-            .catch(() => alert("Erreur lors de la suppression."));
-        }
+          .catch(() => alert("Erreur lors de la suppression."));
       });
     })
-    .catch(error => {
-      console.error("Erreur de chargement :", error);
-      if (h1) h1.textContent = "Erreur réseau";
-      if (container) container.textContent = "Impossible de charger la tâche.";
+    .catch((err) => {
+      // si on n’a pas déjà affiché un message 404 plus haut
+      if (err.message !== "Not Found") {
+        setTitle("Erreur réseau");
+        setBody("<p>Impossible de charger la tâche.</p>");
+        console.error("Erreur de chargement :", err);
+      }
     });
 });
